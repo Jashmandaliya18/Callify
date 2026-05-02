@@ -1,14 +1,14 @@
+require('dotenv').config();
 const express = require('express');
 const bodyparser = require('body-parser');
 const { Server } = require('socket.io');
-
 const http = require('http');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "*", // In production, replace with your frontend URL
+        origin: process.env.ALLOWED_ORIGIN || "*",
         methods: ["GET", "POST"]
     }
 });
@@ -20,10 +20,8 @@ const socketToEmailMap = new Map();
 
 
 io.on('connection', (socket) => {
-    console.log('New Connection');
     socket.on('joinroom', data => {
         const { roomId, email } = data;
-        console.log("user", email, 'join room', roomId);
         emailToSocketMap.set(email, socket.id);
         socketToEmailMap.set(socket.id, email);
         socket.join(roomId);
@@ -53,4 +51,10 @@ const PORT = process.env.PORT || 8000;
 
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+}).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Please try a different port.`);
+    } else {
+        console.error('Server error:', err);
+    }
 });
