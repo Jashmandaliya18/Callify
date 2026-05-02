@@ -2,10 +2,16 @@ const express = require('express');
 const bodyparser = require('body-parser');
 const { Server } = require('socket.io');
 
-const io = new Server({
-    cors: true
-});
+const http = require('http');
+
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*", // In production, replace with your frontend URL
+        methods: ["GET", "POST"]
+    }
+});
 
 app.use(bodyparser.json());
 
@@ -43,8 +49,8 @@ io.on('connection', (socket) => {
     })
 })
 
-app.listen(8000, () => {
-    console.log('Http is run on PORT 8000');
-})
+const PORT = process.env.PORT || 8000;
 
-io.listen(8001);
+server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
